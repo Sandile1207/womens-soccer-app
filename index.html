@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIFA and UEFA Interactive Flashcards</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .flashcard-container {
+            perspective: 1000px;
+            margin-bottom: 30px;
+        }
+        .flashcard {
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            width: 100%;
+            height: 300px;
+            cursor: pointer;
+        }
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .flashcard-front {
+            background-color: #0056b3;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+        .flashcard-back {
+            background-color: white;
+            color: #333;
+            transform: rotateY(180deg);
+            text-align: left;
+        }
+        .flashcard-back ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .flashcard-back li {
+            margin-bottom: 10px;
+        }
+        .logo {
+            font-size: 36px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .nav-btn {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .nav-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .progress {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #0056b3;
+        }
+        .instruction {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+            font-style: italic;
+        }
+        .world-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .quiz-section {
+            margin-top: 40px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .quiz-question {
+            margin-bottom: 20px;
+        }
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .quiz-option {
+            padding: 10px;
+            background-color: #e9f0f8;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .quiz-option:hover {
+            background-color: #d1e3f6;
+        }
+        .quiz-option.selected {
+            background-color: #0056b3;
+            color: white;
+        }
+        .quiz-option.correct {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .quiz-option.incorrect {
+            background-color: #F44336;
+            color: white;
+        }
+        .submit-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .feedback {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .feedback.correct {
+            color: #4CAF50;
+        }
+        .feedback.incorrect {
+            color: #F44336;
+        }
+        .next-btn {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .summary {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0056b3;
+        }
+        .restart-btn {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>FIFA and UEFA Interactive Learning</h1>
+    
+    <div class="instruction">Click on a flashcard to flip it and learn more!</div>
+    
+    <div id="flashcard-deck">
+        <!-- Flashcards will be inserted here -->
+    </div>
+    
+    <div class="navigation">
+        <button id="prev-btn" class="nav-btn" disabled>Previous</button>
+        <button id="next-btn" class="nav-btn">Next</button>
+    </div>
+    
+    <div class="progress" id="progress">Card 1 of 2</div>
+    
+    <div class="quiz-section" id="quiz-container" style="display: none;">
+        <h2>Test Your Knowledge</h2>
+        <div id="quiz-content">
+            <!-- Quiz questions will be inserted here -->
+        </div>
+    </div>
+    
+    <div class="summary" id="summary" style="display: none;">
+        <h2>Quiz Summary</h2>
+        <p>You completed the quiz!</p>
+        <p class="score" id="final-score"></p>
+        <button id="restart-btn" class="restart-btn">Restart</button>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Flashcard content
+            const flashcards = [
+                {
+                    front: '<div class="logo">FIFA</div><div>Fédération Internationale de Football Association</div><div class="world-icon">🌍</div>',
+                    back: `<h3>FIFA: World's Football Governing Body</h3>
+                            <ul>
+                                <li>FIFA is the <strong>world's football governing body</strong>.</li>
+                                <li>It organizes global tournaments like the <strong>FIFA World Cup</strong> (for men and women).</li>
+                                <li>It supports grassroots development, makes football rules, and promotes equality in the sport.</li>
+                                <li>Think of FIFA as the boss of all football worldwide 🌍.</li>
+                            </ul>`
+                },
+                {
+                    front: '<div class="logo">UEFA</div><div>Union of European Football Associations</div><div class="world-icon">⚽🇪🇺</div>',
+                    back: `<h3>UEFA: Europe's Football Organization</h3>
+                            <ul>
+                                <li>UEFA is the <strong>organization in charge of football in Europe</strong>.</li>
+                                <li>It organizes big competitions like the <strong>UEFA Women's Champions League</strong> and <strong>UEFA Women's EURO</strong>.</li>
+                                <li>UEFA supports development of young players, clubs, and women's football programs across Europe.</li>
+                                <li>UEFA = Europe's football manager ⚽🇪🇺.</li>
+                            </ul>`
+                }
+            ];
+            
+            // Quiz content
+            const quizQuestions = [
+                {
+                    question: "What does FIFA stand for?",
+                    options: [
+                        "Football International Federation Association",
+                        "Fédération Internationale de Football Association",
+                        "Federation of International Football Associations",
+                        "Federal International Football Authority"
+                    ],
+                    correctAnswer: 1
+                },
+                {
+                    question: "Which area does UEFA govern?",
+                    options: [
+                        "Worldwide football",
+                        "Asian football",
+                        "South American football",
+                        "European football"
+                    ],
+                    correctAnswer: 3
+                },
+                {
+                    question: "Which tournament is organized by FIFA?",
+                    options: [
+                        "Champions League",
+                        "Europa League",
+                        "FIFA World Cup",
+                        "European Championship"
+                    ],
+                    correctAnswer: 2
+                },
+                {
+                    question: "What tournament does UEFA organize for women's clubs?",
+                    options: [
+                        "UEFA Women's Champions League",
+                        "UEFA Women's Cup",
+                        "Women's World Cup",
+                        "UEFA Ladies Trophy"
+                    ],
+                    correctAnswer: 0
+                },
+                {
+                    question: "How would you best describe FIFA's role?",
+                    options: [
+                        "Regional football administrator",
+                        "World's football governing body",
+                        "European tournament organizer",
+                        "Football players' union"
+                    ],
+                    correctAnswer: 1
+                }
+            ];
+            
+            // Initialize variables
+            let currentCardIndex = 0;
+            let currentQuizIndex = 0;
+            let score = 0;
+            let selectedOption = null;
+            let quizStarted = false;
+            
+            // DOM elements
+            const flashcardDeck = document.getElementById('flashcard-deck');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const progressText = document.getElementById('progress');
+            const quizContainer = document.getElementById('quiz-container');
+            const quizContent = document.getElementById('quiz-content');
+            const summaryContainer = document.getElementById('summary');
+            const finalScoreDisplay = document.getElementById('final-score');
+            const restartBtn = document.getElementById('restart-btn');
+            
+            // Initialize flashcards
+            function renderFlashcards() {
+                flashcardDeck.innerHTML = '';
+                
+                flashcards.forEach((card, index) => {
+                    const flashcardContainer = document.createElement('div');
+                    flashcardContainer.className = 'flashcard-container';
+                    flashcardContainer.style.display = index === currentCardIndex ? 'block' : 'none';
+                    
+                    const flashcard = document.createElement('div');
+                    flashcard.className = 'flashcard';
+                    flashcard.addEventListener('click', function() {
+                        this.classList.toggle('flipped');
+                    });
+                    
+                    const front = document.createElement('div');
+                    front.className = 'flashcard-front';
+                    front.innerHTML = card.front;
+                    
+                    const back = document.createElement('div');
+                    back.className = 'flashcard-back';
+                    back.innerHTML = card.back;
+                    
+                    flashcard.appendChild(front);
+                    flashcard.appendChild(back);
+                    flashcardContainer.appendChild(flashcard);
+                    flashcardDeck.appendChild(flashcardContainer);
+                });
+                
+                updateProgress();
+            }
+            
+            // Navigation functions
+            function goToNextCard() {
+                if (currentCardIndex < flashcards.length - 1) {
+                    currentCardIndex++;
+                    renderFlashcards();
+                    prevBtn.disabled = false;
+                    
+                    if (currentCardIndex === flashcards.length - 1) {
+                        nextBtn.textContent = 'Start Quiz';
+                    }
+                } else {
+                    startQuiz();
+                }
+            }
+            
+            function goToPrevCard() {
+                if (currentCardIndex > 0) {
+                    currentCardIndex--;
+                    renderFlashcards();
+                    nextBtn.textContent = 'Next';
+                    
+                    if (currentCardIndex === 0) {
+                        prevBtn.disabled = true;
+                    }
+                }
+            }
+            
+            function updateProgress() {
+                progressText.textContent = `Card ${currentCardIndex + 1} of ${flashcards.length}`;
+            }
+            
+            // Quiz functions
+            function startQuiz() {
+                flashcardDeck.style.display = 'none';
+                prevBtn.style.display = 'none';
+                nextBtn.style.display = 'none';
+                progressText.style.display = 'none';
+                quizContainer.style.display = 'block';
+                quizStarted = true;
+                currentQuizIndex = 0;
+                score = 0;
+                renderQuizQuestion();
+            }
+            
+            function renderQuizQuestion() {
+                if (currentQuizIndex >= quizQuestions.length) {
+                    showSummary();
+                    return;
+                }
+                
+                const question = quizQuestions[currentQuizIndex];
+                selectedOption = null;
+                
+                quizContent.innerHTML = `
+                    <div class="quiz-question">
+                        <h3>Question ${currentQuizIndex + 1}:</h3>
+                        <p>${question.question}</p>
+                    </div>
+                    <div class="quiz-options">
+                        ${question.options.map((option, index) => 
+                            `<div class="quiz-option" data-index="${index}">${option}</div>`
+                        ).join('')}
+                    </div>
+                    <button class="submit-btn" disabled>Submit Answer</button>
+                    <div class="feedback" style="display: none;"></div>
+                `;
+                
+                // Add event listeners to options
+                const optionElements = quizContent.querySelectorAll('.quiz-option');
+                const submitBtn = quizContent.querySelector('.submit-btn');
+                
+                optionElements.forEach(option => {
+                    option.addEventListener('click', function() {
+                        // Remove selected class from all options
+                        optionElements.forEach(opt => opt.classList.remove('selected'));
+                        
+                        // Add selected class to clicked option
+                        this.classList.add('selected');
+                        
+                        // Enable submit button
+                        submitBtn.disabled = false;
+                        
+                        // Store selected option
+                        selectedOption = parseInt(this.getAttribute('data-index'));
+                    });
+                });
+                
+                // Add event listener to submit button
+                submitBtn.addEventListener('click', checkAnswer);
+            }
+            
+            function checkAnswer() {
+                const question = quizQuestions[currentQuizIndex];
+                const feedback = quizContent.querySelector('.feedback');
+                const options = quizContent.querySelectorAll('.quiz-option');
+                const submitBtn = quizContent.querySelector('.submit-btn');
+                const isCorrect = selectedOption === question.correctAnswer;
+                
+                // Update UI to show correct/incorrect
+                options.forEach((option, index) => {
+                    if (index === question.correctAnswer) {
+                        option.classList.add('correct');
+                    } else if (index === selectedOption && selectedOption !== question.correctAnswer) {
+                        option.classList.add('incorrect');
+                    }
+                });
+                
+                // Show feedback
+                feedback.style.display = 'block';
+                if (isCorrect) {
+                    feedback.textContent = 'Correct! Well done!';
+                    feedback.className = 'feedback correct';
+                    score++;
+                } else {
+                    feedback.textContent = 'Incorrect. The correct answer is highlighted.';
+                    feedback.className = 'feedback incorrect';
+                }
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                
+                // Add next question button
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'next-btn';
+                nextBtn.textContent = currentQuizIndex < quizQuestions.length - 1 ? 'Next Question' : 'See Results';
+                nextBtn.addEventListener('click', function() {
+                    currentQuizIndex++;
+                    renderQuizQuestion();
+                });
+                quizContent.appendChild(nextBtn);
+            }
+            
+            function showSummary() {
+                quizContainer.style.display = 'none';
+                summaryContainer.style.display = 'block';
+                finalScoreDisplay.textContent = `Your score: ${score}/${quizQuestions.length}`;
+            }
+            
+            function restartActivity() {
+                currentCardIndex = 0;
+                quizStarted = false;
+                summaryContainer.style.display = 'none';
+                flashcardDeck.style.display = 'block';
+                prevBtn.style.display = 'inline-block';
+                nextBtn.style.display = 'inline-block';
+                progressText.style.display = 'block';
+                prevBtn.disabled = true;
+                nextBtn.textContent = 'Next';
+                renderFlashcards();
+            }
+            
+            // Event listeners
+            prevBtn.addEventListener('click', goToPrevCard);
+            nextBtn.addEventListener('click', goToNextCard);
+            restartBtn.addEventListener('click', restartActivity);
+            
+            // Initialize the application
+            renderFlashcards();
+        });
+    </script>
+</body>
+</html>
